@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Search Example</title>
+    <style>
+        /* Center the search bar */
+        form {
+            display: flex;
+            justify-content: center;
+            margin-top: 50px;
+        }
+
+        /* Make the search bar rounded */
+        input[name=q] {
+            border-radius: 10px;
+            width: 800px;
+            height: 30px;
+        }
+
+        /* Make the result div scrollable */
+        #results {
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        #results p {
+            margin: 0;
+            padding: 10px;
+            border-bottom: 1px solid #0b0b0b;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        #results p.mark {
+            background-color: yellow;
+        }
+
+        /* Highlight the matching letters in the result */
+        .highlight {
+            background-color: yellow;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <form method="GET" action="/search">
+        <input type="text" name="q" placeholder="Search">
+    </form>
+    <div id="results"></div>
+
+    <script>
+        const form = document.querySelector('form');
+        const searchInput = form.querySelector('input[name=q]');
+        const resultsDiv = document.querySelector('#results');
+
+        let searchTimeoutId = null;
+
+        const search = async () => {
+            const query = searchInput.value.trim();
+            if (query === '') {
+                resultsDiv.innerHTML = '';
+                return;
+            }
+
+            const url = `/search?q=${encodeURIComponent(query)}`;
+            const response = await fetch(url);
+            const { results } = await response.json();
+            if (results.length === 0) {
+                resultsDiv.innerHTML = '<p>No results found.</p>';
+            } else {
+                const resultsHtml = results.map(result => {
+                    const highlighted = result.title.replace(new RegExp(query, 'gi'), match => {
+                        return `<span class="highlight">${match}</span>`;
+                    });
+                    return `<p><b>${highlighted}</b>\n${result.description}</p>`; // Display the title and description
+                }).join('');
+                resultsDiv.innerHTML = resultsHtml;
+            }
+        };
+
+
+        searchInput.addEventListener('input', () => {
+            if (searchTimeoutId !== null) {
+                clearTimeout(searchTimeoutId);
+            }
+            searchTimeoutId = setTimeout(search, 500);
+        });
+    </script>
+</body>
+
+</html>
